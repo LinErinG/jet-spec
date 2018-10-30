@@ -22,11 +22,12 @@
 ;				TIME_RANGE=	Explicit time range for fitting set by user.  This overrides 
 ;							DELTA_T.  If neither DELTA_T nor TIME_RANGE is set, then 
 ;							30 seconds around the flare peak will be used.
+;				BKG_TIME_RANGE = Explicit background time range for fitting set by user.
+;							If this variable is not set, then the nearest 4-minute eclipse 
+;							interval is located and selected.
 ;				DET_MASK =	Array indicating which RHESSI detector (front segments) 
 ;							to use.  Default is Detector 1 only.
 ;				STOP = 		Stop code at the indicated line.  For debugging.
-;
-; Issues	  : The explicit background interval choice must be added to this routine.
 ;
 ; Examples	  :
 ;
@@ -58,6 +59,7 @@
 ;-
 
 PRO	jet_make_spex, flare_num, delta_t=delta_t, time_range=time_range, $
+				   bkg_time_range = bkg_time_range, $
 				   det_mask=det_mask, stop=stop
 
 	default, det_mask, [1,intarr(8)]	; Default detector is 1.
@@ -114,37 +116,53 @@ PRO	jet_make_spex, flare_num, delta_t=delta_t, time_range=time_range, $
 	; If no background time interval is specified, then find the nearest eclipse time.
 	; THIS CODE SHOULD MIMIC EXACTLY WHAT IS IN JET_FIT_SPEX!
 
-	; Our time range should not already include eclipses.  Widen it by 20 minutes on 
-	; either side repeatedly until it does.
-	wide_time = anytim( time_range )
-	while( flag_changes.eclipse_flag.start_times[0] eq -1 and $
-		   flag_changes.eclipse_flag.end_times[0] eq -1 ) do begin
-		wide_time += [-1.,1.]*20*60.
-		obs_obj-> set, obs_time_interval= anytim( wide_time )
-		flag_changes = obs_obj -> changes()
-	endwhile
-	; Identify the closest transition.  If it's after the flare, use this as the start of 
-	; a 4-min background interval.  If it's before the flare then use it as the end of a 
-	; 4-min background interval.
-	trans = flag_changes.eclipse_flag.start_times[where(flag_changes.eclipse_flag.state eq 1)]
-	trans = [[trans],[flag_changes.eclipse_flag.end_times[where(flag_changes.eclipse_flag.state eq 1)]]]
-	trans = transpose( trans )
-	i = closest( trans, average(anytim( time_range )) )
-	; Only one of the following conditions is true.
-	if trans[i] lt anytim( time_range[0] ) then bkg_time_range = [-240.,0.]+trans[i]
-	if trans[i] gt anytim( time_range[0] ) then bkg_time_range = [0., 240.]+trans[i]
-	if trans[i] ge anytim( time_range[0] ) and trans[i] le anytim( time_range[1] ) then begin
-		; This can't happen, but is included for completeness.
-		print, 'Error finding background times.'
-		return
+	if not keyword_set( bkg_time_range ) then begin
+		; Our time range should not already include eclipses.  Widen it by 20 minutes on 
+		; either side repeatedly until it does.
+		wide_time = anytim( time_range )
+		while( flag_changes.eclipse_flag.start_times[0] eq -1 and $
+			   flag_changes.eclipse_flag.end_times[0] eq -1 ) do begin
+			wide_time += [-1.,1.]*20*60.
+			obs_obj-> set, obs_time_interval= anytim( wide_time )
+			flag_changes = obs_obj -> changes()
+		endwhile
+		; Identify the closest transition.  If it's after the flare, use this as the start of 
+		; a 4-min background interval.  If it's before the flare then use it as the end of a 
+		; 4-min background interval.
+		trans = flag_changes.eclipse_flag.start_times[where(flag_changes.eclipse_flag.state eq 1)]
+		trans = [[trans],[flag_changes.eclipse_flag.end_times[where(flag_changes.eclipse_flag.state eq 1)]]]
+		trans = transpose( trans )
+		i = closest( trans, average(anytim( time_range )) )
+		; Only one of the following conditions is true.
+		if trans[i] lt anytim( time_range[0] ) then bkg_time_range = [-240.,0.]+trans[i]
+		if trans[i] gt anytim( time_range[0] ) then bkg_time_range = [0., 240.]+trans[i]
+		if trans[i] ge anytim( time_range[0] ) and trans[i] le anytim( time_range[1] ) then begin
+			; This can't happen, but is included for completeness.
+			print, 'Error finding background times.'
+			return
+		endif
 	endif
 	
 	; The time range for SPEX needs to be extended to include this background interval.
 	time_range_ext = anytim( time_range )		; extended time range
 	; Only one of the following conditions is true.
-	if trans[i] lt anytim( time_range[0] ) then time_range_ext[0] = -240.+trans[i]
-	if trans[i] gt anytim( time_range[0] ) then time_range_ext[1] =  240.+trans[i]
+;;;	if trans[i] lt anytim( time_range[0] ) then time_range_ext[0] = -240.+trans[i]
+;;;	if trans[i] gt anytim( time_range[0] ) then time_range_ext[1] =  240.+trans[i]
+	if anytim(bkg_time_range[1]) lt anytim( time_range[0] ) then $
+		time_range_ext[0] = -240.+anytim(bkg_time_range[0]) else $
+		if anytim(bkg_time_range[0]) gt anytim( time_range[1] ) then $
+			time_range_ext[1] =  240.+anytim(bkg_time_range[1]) else begin
+				print, 'Cannot use background during flare time interval.'
+				return
+			endelse
 
+	; Prepare the time interval and background time interval stems for (all) filenames.
+	tim = anytim( time_range, /yo )
+	tim = strmid( tim,10,2 )+strmid( tim,13,2 )+strmid( tim,16,2 )
+	bkg = anytim( bkg_time_range, /yo )
+	bkg = strmid( bkg,10,2 )+strmid( bkg,13,2 )+strmid( bkg,16,2 )
+	stem = '_'+tim[0]+'_'+tim[1]+'_bkg_'+bkg[0]+'_'+bkg[1]
+	
 	; Overplot background times on the observing summary.
 	obs_obj_wide-> set, obs_time_interval= anytim( time_range )+[-1.,1.]*30.*60.
 	obs_obj_wide-> plot
@@ -155,7 +173,7 @@ PRO	jet_make_spex, flare_num, delta_t=delta_t, time_range=time_range, $
 	!p.multi=0
 
 	; Also save the plot.
-	write_png, 'time_interval_'+strtrim(flare_num,2)+'.png', tvrd(/true)
+	write_png, 'time_interval_'+strtrim(flare_num,2)+stem+'.png', tvrd(/true)
 
 	; Next is the creation of the count and response files using the SPEX object.
 	; No pileup correction is used; this probably won't be necessary for these flares.
@@ -182,8 +200,8 @@ PRO	jet_make_spex, flare_num, delta_t=delta_t, time_range=time_range, $
 	
 	data = obj->getdata()    ; retrieve the spectrum data
 	
-	specfile = 'hsi_spec_'+strtrim(flare_num,2)+'.fits'
-	srmfile  = 'hsi_srm_' +strtrim(flare_num,2)+'.fits'
+	specfile = 'hsi_spec_'+strtrim(flare_num,2)+stem+'.fits'
+	srmfile  = 'hsi_srm_' +strtrim(flare_num,2)+stem+'.fits'
 	obj->filewrite, /buildsrm, all_simplify = 0, srmfile = srmfile, specfile = specfile
 	
 END

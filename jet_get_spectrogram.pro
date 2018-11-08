@@ -14,7 +14,10 @@
 ;
 ; Outputs     : NONE, but a PNG file is downloaded from hesperia.gsfc.nasa.gov.
 ;
-; Keywords    : NONE
+; Keywords    : OUT_DIR = output directory in which to store the spectrogram PNG plots
+;						  If directory does not exists, it is created.  If no directory 
+;						  is specified, the local directory is assumed.
+;			  : STOP = keyword to stop procedure, for debugging
 ;
 ; Examples	  :
 ;
@@ -25,7 +28,13 @@
 ; History     : First version 2018 Nov 08, L. Glesener
 ;-
 
-PRO jet_get_spectrogram, flare_num, stop=stop
+PRO jet_get_spectrogram, flare_num, out_dir=out_dir, stop=stop
+
+	; Check if the output directory exists.  If not, create it.
+	; If no out_dir is set then use current directory.
+	if keyword_set( OUT_DIR ) then begin
+		if file_search( OUT_DIR ) eq '' then spawn, 'mkdir '+out_dir
+	endif else out_dir = './'
 
 	; Retrieve the flare record.
 	; Get a year range in which to look for the flare record.
@@ -76,7 +85,7 @@ PRO jet_get_spectrogram, flare_num, stop=stop
 	the_right_string = strings2[ i[0]-1 ]
 	
 	oUrl->SetProperty, URL_PATH = path+the_right_string
-	fn = oUrl->Get(FILENAME = './'+the_right_string )  
+	fn = oUrl->Get(FILENAME = out_dir+'/'+the_right_string )  
 	PRINT, 'filename returned = ', fn
 
 	OBJ_DESTROY, oUrl

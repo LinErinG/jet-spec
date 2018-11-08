@@ -17,6 +17,14 @@
 ;				and 'fit_count_spectrum_12063050.png,' respectively.
 ;
 ; Keywords    : BPOW = 	Add a broken power law fit to the default VTH fit.
+;				IN_DIR =	input directory in which to look for SPEX files.
+;						  	If not specified, the local directory is assumed.
+;				DIR_PNG =	output directory in which to store the fit plot PNGs.
+;						  	If directory does not exists, it is created.  If no directory 
+;						  	is specified, the local directory is assumed.
+;				DIR_FITS =	output directory in which to store the fit result FITS file.
+;						  	If directory does not exists, it is created.  If no directory 
+;						  	is specified, the local directory is assumed.
 ;				STOP = 	Stop code at the indicated line.  For debugging.
 ;
 ; Examples	  :
@@ -48,8 +56,19 @@
 ; History     : First version 2018 Oct 23, L. Glesener
 ;-
 
-PRO	jet_fit_spex, flare_num, bpow=bpow, $
+PRO	jet_fit_spex, flare_num, bpow=bpow, in_dir=in_dir, dir_png=dir_png, dir_fits=dir_fits, $
 				  stop = stop
+
+	default, in_dir, '.'
+
+	; Check if the output directories exist.  If not, create them.
+	; If no out_dir is set then use current directory.
+	if keyword_set( DIR_PNG ) then begin
+		if file_search( DIR_PNG ) eq '' then spawn, 'mkdir '+dir_png
+	endif else dir_png = './'
+	if keyword_set( DIR_FITS ) then begin
+		if file_search( DIR_FITS ) eq '' then spawn, 'mkdir '+dir_fits
+	endif else dir_fits = './'
 
 	; Retrieve the flare record.
 	; Get a year range in which to look for the flare record.
@@ -63,7 +82,11 @@ PRO	jet_fit_spex, flare_num, bpow=bpow, $
 	flare = flare_list( where(flare_list.id_number eq flare_num) )
 
 	; Pick up fitting time range and background time range from the filename.
-	f = file_search( 'hsi_spec_'+strtrim(flare_num,2)+'*fits' )
+	f = file_search( in_dir+'/'+'hsi_spec_'+strtrim(flare_num,2)+'*fits' )
+
+	; Remove directory from filename if it exists.
+	test = strpos( f, '/' )
+	if test ne -1 then f = strmid( f, test+1 )
 	t0 = strmid( f, strpos( f, '_', 13 )+1, 6 )
 	t1 = strmid( f, strpos( f, '_', 20 )+1, 6 )
 	t=[t0,t1]
@@ -110,8 +133,10 @@ PRO	jet_fit_spex, flare_num, bpow=bpow, $
 	specfile = 'hsi_spec_'+strtrim(flare_num,2)+stem+'.fits'
 	srmfile  = 'hsi_srm_' +strtrim(flare_num,2)+stem+'.fits'
 	
+	if keyword_set( STOP ) then stop
+	
 	; Give error if SPEC and SRM files are not found.
-	if (file_search(specfile) eq '' or file_search(srmfile) eq '') then begin
+	if (file_search(in_dir+'/'+specfile) eq '' or file_search(in_dir+'/'+srmfile) eq '') then begin
 		print, 'Error! SPEC or SRM file is missing.'
 		return
 	endif
@@ -131,8 +156,8 @@ PRO	jet_fit_spex, flare_num, bpow=bpow, $
 	endif
 
 	obj = ospex()
-	obj-> set, spex_specfile= specfile
-	obj-> set, spex_drmfile= srmfile
+	obj-> set, spex_specfile= in_dir+'/'+specfile
+	obj-> set, spex_drmfile= in_dir+'/'+srmfile
 	obj-> set,spex_bk_time_interval= bkg_time_range
 	obj-> set, spex_fit_time_interval = time_range
 
@@ -165,14 +190,14 @@ PRO	jet_fit_spex, flare_num, bpow=bpow, $
 	png_stem = 'fit_count_spectrum_vth_'
 	if keyword_set( BPOW ) then png_stem += 'bpow_'
 	png_stem += strtrim(flare_num,2)+'.png'
-	write_png, png_stem, tvrd(/true)
+	write_png, dir_png+'/'+png_stem, tvrd(/true)
 	
 	fits_stem = 'ospex_results_vth_'
 	if keyword_set( BPOW ) then fits_stem += 'bpow_'
 	fits_stem += strtrim(flare_num,2)+'.fits'
-	obj -> savefit, outfile = fits_stem
+	obj -> savefit, outfile = dir_fits+'/'+fits_stem
 	; THIS WILL OVERWRITE!
 
-	if keyword_set( STOP ) then stop
+	obj_destroy, obj
 
 END

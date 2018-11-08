@@ -27,7 +27,13 @@
 ;							interval is located and selected.
 ;				DET_MASK =	Array indicating which RHESSI detector (front segments) 
 ;							to use.  Default is Detector 1 only.
-;				STOP = 		Stop code at the indicated line.  For debugging.
+;				DIR_PNG =	output directory in which to store the lightcurve PNGs.
+;						  	If directory does not exists, it is created.  If no directory 
+;						  	is specified, the local directory is assumed.
+;				DIR_FITS =	output directory in which to store the spectral FITS files.
+;						  	If directory does not exists, it is created.  If no directory 
+;						  	is specified, the local directory is assumed.
+;			    STOP = 		keyword to stop procedure, for debugging
 ;
 ; Examples	  :
 ;
@@ -60,11 +66,20 @@
 
 PRO	jet_make_spex, flare_num, delta_t=delta_t, time_range=time_range, $
 				   bkg_time_range = bkg_time_range, $
-				   det_mask=det_mask, stop=stop
+				   det_mask=det_mask, dir_png=dir_png, dir_fits=dir_fits, stop=stop
 
 	default, det_mask, [1,intarr(8)]	; Default detector is 1.
 	det_mask = [det_mask, intarr(9)]	; Don't use rear segments.
 	default, delta_t, 30.
+
+	; Check if the output directories exist.  If not, create them.
+	; If no out_dir is set then use current directory.
+	if keyword_set( DIR_PNG ) then begin
+		if file_search( DIR_PNG ) eq '' then spawn, 'mkdir '+dir_png
+	endif else dir_png = './'
+	if keyword_set( DIR_FITS ) then begin
+		if file_search( DIR_FITS ) eq '' then spawn, 'mkdir '+dir_fits
+	endif else dir_fits = './'
 
 	; Retrieve the flare record and choose the time if one is not given.
 	if not keyword_set( time_range ) then begin
@@ -174,7 +189,7 @@ PRO	jet_make_spex, flare_num, delta_t=delta_t, time_range=time_range, $
 	!p.multi=0
 
 	; Also save the plot.
-	write_png, 'time_interval_'+strtrim(flare_num,2)+stem+'.png', tvrd(/true)
+	write_png, dir_png+'/'+'time_interval_'+strtrim(flare_num,2)+stem+'.png', tvrd(/true)
 
 	; Next is the creation of the count and response files using the SPEX object.
 	; No pileup correction is used; this probably won't be necessary for these flares.
@@ -201,8 +216,10 @@ PRO	jet_make_spex, flare_num, delta_t=delta_t, time_range=time_range, $
 	
 	data = obj->getdata()    ; retrieve the spectrum data
 	
-	specfile = 'hsi_spec_'+strtrim(flare_num,2)+stem+'.fits'
-	srmfile  = 'hsi_srm_' +strtrim(flare_num,2)+stem+'.fits'
+	specfile = dir_fits+'/'+'hsi_spec_'+strtrim(flare_num,2)+stem+'.fits'
+	srmfile  = dir_fits+'/'+'hsi_srm_' +strtrim(flare_num,2)+stem+'.fits'
 	obj->filewrite, /buildsrm, all_simplify = 0, srmfile = srmfile, specfile = specfile
-	
+
+	obj_destroy, OBJ
+
 END

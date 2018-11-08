@@ -18,24 +18,20 @@
 ;	check this.  Maybe add more info to file name, too.  DONE
 ;
 ; Some outstanding tasks/options for the code:
-; -- The saved plots should be made prettier -- colors, better formatting, more labels.
-; -- Add a function to show spectrograms of the detectors, to aid in detector choices.
-;		-- Either generate these on the fly, or use Berkeley quicklooks, e.g.:
-;	 https://hesperia.gsfc.nasa.gov/rhessi_extras/spectrograms/counts_plots/2012/09/12/hsi_orbit_spec_9dets_20120912_0432.png
-; -- Some of these things could be in separate functions/procedures that are run first...
-;		-- e.g. time interval / bkgd selection / spectrograms could be done before 
-;		   starting the spex routine.
-; 		-- May want a routine to auto-generate the flare number.
 ; -- The routines are poorly named, given that they work for any flare, not just jets!
 ; -- The code could be adapted for Fermi and/or KW.
-; -- Currently, the defaults are to just use detector 1.  Use of the code should try more.
 ; -- 
 
 ; Examples:
 
-; Sept 12, 2012 (Example that was used for most of the debugging.  All default settings.)
+; Sept 12, 2012 (Example that was used for most of the debugging.)
+; Choose the flare
 flare_num = 12091214
-;jet_make_spex, flare_num
+; Fetch spectrogram set from Berkeley to use for judging good detectors.
+jet_get_spectrogram, flare_num
+det_mask=[1,0,1,0,0,1,1,0,1]
+; Produce spex files and do the fit.
+jet_make_spex, flare_num, det_mask=det_mask
 jet_fit_spex, flare_num
 
 ; June 30, 2012 (Example using the default of 30 sec around flare peak)
@@ -61,8 +57,8 @@ jet_fit_spex, flare_num
 ; June 30, 2012 (Example of manually setting the background time interval, since there 
 ; are data for quite awhile into the eclipse.)  ALSO FIT NONTHERMAL PART!
 flare_num = 12063050
-;jet_make_spex, flare_num, time_range='2012-jun-30 '+['1830','1832'], $
-;	bkg='2012-jun-30 '+['185032','1900']
+jet_make_spex, flare_num, time_range='2012-jun-30 '+['1830','1832'], $
+	bkg='2012-jun-30 '+['185032','1900']
 jet_fit_spex, flare_num, /bpow
 
 

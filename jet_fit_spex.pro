@@ -82,12 +82,12 @@ PRO	jet_fit_spex, flare_num, bpow=bpow, $
 	window, 1, xsi=600, ysi=600
 	hsi_linecolors
 	!p.multi=[0,1,2]
-	obs_obj_wide-> plot, /ylog
+	obs_obj_wide-> plot, /ylog, dim1_colors=[1,2,3,4,5,6,7,8,9]
 	outplot, anytim([time_range[0],time_range[0]],/yo),[1,1.e6]
 	outplot, anytim([time_range[1],time_range[1]],/yo),[1,1.e6]
 	; Overplot background times on the observing summary.
 	obs_obj_wide-> set, obs_time_interval= anytim( time_range )+[-1.,1.]*30.*60.
-	obs_obj_wide-> plot
+	obs_obj_wide-> plot, dim1_colors=[1,2,3,4,5,6,7,8,9]
 	outplot, anytim([time_range[0],time_range[0]],/yo),[1,1.e6]
 	outplot, anytim([time_range[1],time_range[1]],/yo),[1,1.e6]
 	outplot, anytim([bkg_time_range[0],bkg_time_range[0]],/yo),[1,1.e6]
@@ -159,7 +159,9 @@ PRO	jet_fit_spex, flare_num, bpow=bpow, $
 	obj -> dofit, /all
 
 	; Save a plot of the fit spectrum.
-	obj -> plot_spectrum, /no_plotman, /show_fit, /bksub, /overlay_back
+	hsi_linecolors
+	obj -> plot_spectrum, /no_plotman, /show_fit, /bksub, /overlay_back, $
+		   dim1_colors=[1,2,3,4,5,6,7,8,9]
 	png_stem = 'fit_count_spectrum_vth_'
 	if keyword_set( BPOW ) then png_stem += 'bpow_'
 	png_stem += strtrim(flare_num,2)+'.png'

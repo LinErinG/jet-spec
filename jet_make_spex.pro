@@ -94,7 +94,7 @@ PRO	jet_make_spex, flare_num, delta_t=delta_t, time_range=time_range, $
 	window, 1, xsi=600, ysi=600
 	hsi_linecolors
 	!p.multi=[0,1,2]
-	obs_obj_wide-> plot, /ylog
+	obs_obj_wide-> plot, /ylog, dim1_colors=[1,2,3,4,5,6,7,8,9]
 	outplot, anytim([time_range[0],time_range[0]],/yo),[1,1.e6]
 	outplot, anytim([time_range[1],time_range[1]],/yo),[1,1.e6]
 
@@ -165,7 +165,8 @@ PRO	jet_make_spex, flare_num, delta_t=delta_t, time_range=time_range, $
 	
 	; Overplot background times on the observing summary.
 	obs_obj_wide-> set, obs_time_interval= anytim( time_range )+[-1.,1.]*30.*60.
-	obs_obj_wide-> plot
+	hsi_linecolors
+	obs_obj_wide-> plot, dim1_colors=[1,2,3,4,5,6,7,8,9]
 	outplot, anytim([time_range[0],time_range[0]],/yo),[1,1.e6]
 	outplot, anytim([time_range[1],time_range[1]],/yo),[1,1.e6]
 	outplot, anytim([bkg_time_range[0],bkg_time_range[0]],/yo),[1,1.e6]

@@ -18,6 +18,7 @@
 ;						  If directory does not exists, it is created.  If no directory 
 ;						  is specified, the local directory is assumed.
 ;			  : STOP = keyword to stop procedure, for debugging
+;			  : NOPLOT = if set, do not open the plot.  Just save it.
 ;
 ; Examples	  :
 ;
@@ -28,7 +29,7 @@
 ; History     : First version 2018 Nov 08, L. Glesener
 ;-
 
-PRO jet_get_spectrogram, flare_num, out_dir=out_dir, stop=stop
+PRO jet_get_spectrogram, flare_num, out_dir=out_dir, noplot=noplot, stop=stop
 
 	; Check if the output directory exists.  If not, create it.
 	; If no out_dir is set then use current directory.
@@ -96,7 +97,7 @@ PRO jet_get_spectrogram, flare_num, out_dir=out_dir, stop=stop
 
 	OBJ_DESTROY, oUrl
 	
-	spawn, 'open '+fn
+	if not keyword_set( NOPLOT ) then spawn, 'open '+fn
 	
 	if keyword_set( STOP ) then stop
 	

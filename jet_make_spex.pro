@@ -221,5 +221,7 @@ PRO	jet_make_spex, flare_num, delta_t=delta_t, time_range=time_range, $
 	obj->filewrite, /buildsrm, all_simplify = 0, srmfile = srmfile, specfile = specfile
 
 	obj_destroy, OBJ
+	obj_destroy, obs_obj_wide
+	obj_destroy, obs_obj
 
 END

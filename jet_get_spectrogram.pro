@@ -84,8 +84,14 @@ PRO jet_get_spectrogram, flare_num, out_dir=out_dir, stop=stop
 	endif
 	the_right_string = strings2[ i[0]-1 ]
 	
+	; Catch another possible error that indicates we are out of range.
+	if strmid( the_right_string, 0, 3 ) ne 'hsi' then begin
+		print, 'Spectrogram files are not in the right time range'
+		return
+	endif
+	
 	oUrl->SetProperty, URL_PATH = path+the_right_string
-	fn = oUrl->Get(FILENAME = out_dir+'/'+the_right_string )  
+	fn = oUrl->Get(FILENAME = out_dir+'/'+strtrim(flare_num,2)+'_'+the_right_string )  
 	PRINT, 'filename returned = ', fn
 
 	OBJ_DESTROY, oUrl

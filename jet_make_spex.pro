@@ -122,7 +122,7 @@ PRO	jet_make_spex, flare_num, delta_t=delta_t, time_range=time_range, $
 	; chosen time for analysis, then just return that information and quit.
 	; This part has not been tested yet!
 	flag_changes = obs_obj -> changes()
-	if flag_changes.attenuator_state[0].start_times ne -1 then begin
+	if flag_changes.attenuator_state[0].start_times[0] ne -1 then begin
 		print, 'Attenuator state changes at:'
 		for i=0, n_elements(flag_changes.attenuator_state)-1 do $
 			ptim, flag_changes[i].attenuator_state.start_times

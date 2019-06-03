@@ -1,5 +1,10 @@
 # jet-spec
 
+Overall workflow:
+1 - Get detector spectrograms in order to determine which detectors to use.
+2 - Produce spex files (count spectrum and response).  This step pulls up time profiles to show the intervals for analysis and for background, and these choices can be adjusted by manually entering intervals instead.
+3 - Perform fit.  Default is a VTH only, but a BPOW can be added via keyword.
+
 ; Examples:
 
 ; Sept 12, 2012 (Example that was used for most of the debugging.)

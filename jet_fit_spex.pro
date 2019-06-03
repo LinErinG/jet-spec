@@ -133,8 +133,6 @@ PRO	jet_fit_spex, flare_num, bpow=bpow, in_dir=in_dir, dir_png=dir_png, dir_fits
 	specfile = 'hsi_spec_'+strtrim(flare_num,2)+stem+'.fits'
 	srmfile  = 'hsi_srm_' +strtrim(flare_num,2)+stem+'.fits'
 	
-	if keyword_set( STOP ) then stop
-	
 	; Give error if SPEC and SRM files are not found.
 	if (file_search(in_dir+'/'+specfile) eq '' or file_search(in_dir+'/'+srmfile) eq '') then begin
 		print, 'Error! SPEC or SRM file is missing.'
@@ -183,6 +181,8 @@ PRO	jet_fit_spex, flare_num, bpow=bpow, in_dir=in_dir, dir_png=dir_png, dir_fits
 
 	obj -> dofit, /all
 
+	if keyword_set( STOP ) then stop
+	
 	; Save a plot of the fit spectrum.
 	hsi_linecolors
 	obj -> plot_spectrum, /no_plotman, /show_fit, /bksub, /overlay_back, $

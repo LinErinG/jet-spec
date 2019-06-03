@@ -3,19 +3,11 @@
 ;
 
 ; Questions for Sophie:
-; -- Easier to call functions with flare number or time range?  
-;		I like flare number better. Sophie agrees.
-; -- Which functions do we want included in the fit?  VTH only?  VTH + BPOW?  
-;		Yes, these two options.  Add both to the same routine, with keyword(s).
-;		-- Probably best to do it once, separately, for each!
 ; -- Do we want parameters over time, or just for one interval?  
 ;		We agree that right now we don't need time evolution.
 ; -- What are the most useful outputs?
 ;		-- At what energy does the count spectrum equal background?  Decide whether to 
 ;			save this separately or compute it from saved fit structure.
-;
-; -- Sophie suggestion:  add time interval to saved file from spex, and have fit routine 
-;	check this.  Maybe add more info to file name, too.  DONE
 ;
 ; Some outstanding tasks/options for the code:
 ; -- The routines are poorly named, given that they work for any flare, not just jets!
@@ -37,21 +29,21 @@ jet_fit_spex, flare_num, in_dir='spex', dir_png='fit_plot', dir_fits='fit_result
 ; June 30, 2012 (Example using the default of 30 sec around flare peak)
 flare_num = 12063050
 jet_make_spex, flare_num
-jet_fit_spex, flare_num
+jet_fit_spex, flare_num, in_dir='spex', dir_png='fit_plot', dir_fits='fit_results'
 ; Note: an examination of the defaults chosen here show that the default does NOT give 
 ; the most optimal interval.  It's missing the high-energy component.
 
 ; June 30, 2012 (Example of manually setting a larger fit duration, still around the peak)
 flare_num = 12063050
 jet_make_spex, flare_num, delta_t=60.
-jet_fit_spex, flare_num
+jet_fit_spex, flare_num, in_dir='spex', dir_png='fit_plot', dir_fits='fit_results'
 ; This *still* misses the high-energy peak!  For this one, we should choose the time 
 ; interval by hand.
 
 ; June 30, 2012 (Example of manually setting the time interval)
 flare_num = 12063050
 jet_make_spex, flare_num, time_range='2012-jun-30 '+['1830','1832']
-jet_fit_spex, flare_num
+jet_fit_spex, flare_num, in_dir='spex', dir_png='fit_plot', dir_fits='fit_results'
 ; This is a much better time interval, and gives a good fit.
 
 ; June 30, 2012 (Example of manually setting the background time interval, since there 

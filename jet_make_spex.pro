@@ -25,10 +25,12 @@
 ;				BKG_TIME_RANGE = Explicit background time range for fitting set by user.
 ;							If this variable is not set, then the nearest 4-minute eclipse 
 ;							interval is located and selected.
+;				WHOLE_FLARE	= If set, just use the flare start and end times as the 
+;							time interval of interest.  Supercedes any other timing keywords.
 ;				DET_MASK =	Array indicating which RHESSI detector (front segments) 
 ;							to use.  Default is Detector 1 only.
 ;				DIR_PNG =	output directory in which to store the lightcurve PNGs.
-;						  	If directory does not exists, it is created.  If no directory 
+;						  	If directory does not exist, it is created.  If no directory 
 ;						  	is specified, the local directory is assumed.
 ;				DIR_FITS =	output directory in which to store the spectral FITS files.
 ;						  	If directory does not exists, it is created.  If no directory 
@@ -65,7 +67,7 @@
 ;-
 
 PRO	jet_make_spex, flare_num, delta_t=delta_t, time_range=time_range, $
-				   bkg_time_range = bkg_time_range, $
+				   bkg_time_range = bkg_time_range, whole_flare = whole_flare, $
 				   det_mask=det_mask, dir_png=dir_png, dir_fits=dir_fits, stop=stop
 
 	default, det_mask, [1,intarr(8)]	; Default detector is 1.
@@ -82,7 +84,7 @@ PRO	jet_make_spex, flare_num, delta_t=delta_t, time_range=time_range, $
 	endif else dir_fits = './'
 
 	; Retrieve the flare record and choose the time if one is not given.
-	if not keyword_set( time_range ) then begin
+	if keyword_set( WHOLE_FLARE ) or not keyword_set( time_range ) then begin
 		; Get a year range in which to look for the flare record.
 		year = '200'+strmid(strtrim(flare_num,2),0,1)
 		if year eq '2001' then year = '20'+strmid(strtrim(flare_num,2),0,2)
@@ -97,9 +99,8 @@ PRO	jet_make_spex, flare_num, delta_t=delta_t, time_range=time_range, $
 		if time_range[0] lt flare.start_time then time_range[0] = flare.start_time
 		if time_range[1] gt flare.end_time then time_range[1] = flare.end_time
 	endif
-	;else begin
-	;consider whether you still need the record if the time range is given.  Maybe no?
-	;endelse
+
+	if keyword_set( WHOLE_FLARE ) then time_range = [flare.start_time,flare.end_time]
 
 	; Display a plot of the surrounding time with our chosen 
 	; interval indicated.
@@ -129,7 +130,6 @@ PRO	jet_make_spex, flare_num, delta_t=delta_t, time_range=time_range, $
 	endif
 
 	; If no background time interval is specified, then find the nearest eclipse time.
-	; THIS CODE SHOULD MIMIC EXACTLY WHAT IS IN JET_FIT_SPEX!
 
 	if not keyword_set( bkg_time_range ) then begin
 		; Our time range should not already include eclipses.  Widen it by 20 minutes on 
@@ -154,7 +154,7 @@ PRO	jet_make_spex, flare_num, delta_t=delta_t, time_range=time_range, $
 		if trans[i] ge anytim( time_range[0] ) and trans[i] le anytim( time_range[1] ) then begin
 			; This can't happen, but is included for completeness.
 			print, 'Error finding background times.'
-			return
+			stop
 		endif
 	endif
 	
@@ -179,7 +179,7 @@ PRO	jet_make_spex, flare_num, delta_t=delta_t, time_range=time_range, $
 	stem = '_'+tim[0]+'_'+tim[1]+'_bkg_'+bkg[0]+'_'+bkg[1]
 	
 	; Overplot background times on the observing summary.
-	obs_obj_wide-> set, obs_time_interval= anytim( time_range )+[-1.,1.]*30.*60.
+	obs_obj_wide-> set, obs_time_interval= anytim( time_range )+[-1.2,1.2]*30.*60.
 	hsi_linecolors
 	obs_obj_wide-> plot, dim1_colors=[1,2,3,4,5,6,7,8,9]
 	outplot, anytim([time_range[0],time_range[0]],/yo),[1,1.e6]
